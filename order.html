@@ -1,0 +1,429 @@
+<!doctype html>
+<html lang="vi">
+
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  <title>Đặt VPS · Hữu Phát VPS</title>
+
+  <style>
+:root {
+  --bg: #f5f8ff;
+  --card: #ffffff;
+  --border: #dbe5f3;
+  --text: #0f172a;
+  --muted: #64748b;
+  --primary: #2563eb;
+  --primary-hover: #1d4ed8;
+  --primary-soft: #eff6ff;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--text);
+  font: 15px system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+}
+
+.w {
+  max-width: 650px;
+  margin: auto;
+  padding: 24px;
+}
+
+h1 {
+  margin: 6px 0 18px;
+  letter-spacing: -0.4px;
+}
+
+h2 {
+  margin-top: 0;
+}
+
+.card {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 18px;
+  padding: 20px;
+  margin: 14px 0;
+  box-shadow: 0 8px 24px rgba(15, 23, 42, 0.06);
+}
+
+label {
+  display: block;
+  font-weight: 600;
+  margin-top: 5px;
+}
+
+input,
+select,
+button {
+  width: 100%;
+  padding: 12px;
+  margin: 6px 0 12px;
+  border-radius: 12px;
+  font: inherit;
+}
+
+input,
+select {
+  border: 1px solid #cbd5e1;
+  background: #ffffff;
+  color: var(--text);
+  outline: none;
+}
+
+input:focus,
+select:focus {
+  border-color: var(--primary);
+  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.10);
+}
+
+button {
+  background: var(--primary);
+  color: #ffffff;
+  border: 0;
+  font-weight: 800;
+  cursor: pointer;
+  transition: 0.15s;
+}
+
+button:hover {
+  background: var(--primary-hover);
+}
+
+.m {
+  color: var(--muted);
+}
+
+.code {
+  font: 800 24px ui-monospace, SFMono-Regular, Consolas, monospace;
+  letter-spacing: 1px;
+  color: var(--primary-hover);
+  margin-bottom: 8px;
+}
+
+.hide {
+  display: none;
+}
+
+.qr {
+  display: block;
+  width: min(320px, 100%);
+  margin: 18px auto;
+  border-radius: 16px;
+  background: #ffffff;
+  border: 1px solid var(--border);
+}
+
+.payment-info {
+  line-height: 1.9;
+  margin: 18px 0;
+  padding: 14px 16px;
+  background: #f8faff;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+}
+
+.warning {
+  margin-top: 16px;
+  padding: 13px 15px;
+  border-radius: 12px;
+  background: var(--primary-soft);
+  border: 1px solid #bfdbfe;
+  color: #1e40af;
+  line-height: 1.6;
+}
+
+@media (max-width: 600px) {
+  .w {
+    padding: 14px;
+  }
+
+  .card {
+    padding: 16px;
+    border-radius: 15px;
+  }
+
+  h1 {
+    font-size: 26px;
+  }
+}
+</style>
+</head>
+
+<body>
+
+  <div class="w">
+
+    <h1>Đặt VPS</h1>
+
+    <!-- FORM TẠO ĐƠN -->
+    <div id="form" class="card">
+
+      <div id="refInfo" class="m"></div>
+
+      <label>Gói</label>
+      <select id="plan"></select>
+
+      <label>Tên / biệt danh</label>
+      <input id="name">
+
+      <label>Zalo / liên hệ</label>
+      <input id="contact">
+
+      <button onclick="createOrder()">
+        Tạo đơn & QR thanh toán
+      </button>
+
+      <div id="msg" class="m"></div>
+
+    </div>
+
+
+    <!-- THANH TOÁN -->
+    <div id="pay" class="card hide">
+
+      <h2>Quét QR để thanh toán</h2>
+
+      <img
+        id="qr"
+        class="qr"
+        alt="QR chuyển khoản"
+      >
+
+      <div class="payment-info">
+
+        <div>
+          Ngân hàng:
+          <b id="bankName"></b>
+        </div>
+
+        <div>
+          STK:
+          <b id="bankAccount"></b>
+        </div>
+
+        <div>
+          Chủ TK:
+          <b id="bankOwner"></b>
+        </div>
+
+        <div>
+          Số tiền:
+          <b id="amount"></b>
+        </div>
+
+      </div>
+
+      <p>Nội dung chuyển khoản:</p>
+
+      <div
+        class="code"
+        id="paymentCode"
+      ></div>
+
+      <button onclick="copyCode()">
+        Sao chép nội dung
+      </button>
+
+      <div class="warning">
+        ⚠️ Hữu Phát VPS chỉ nhận thanh toán qua tài khoản ngân hàng
+        hiển thị phía trên. Nếu thông tin tài khoản khác,
+        vui lòng không chuyển tiền.
+      </div>
+
+    </div>
+
+  </div>
+
+
+  <script src="config.js"></script>
+
+  <script>
+    const API = window.PHATVPS_API_BASE || "";
+
+    const ref =
+      new URLSearchParams(location.search).get("ref") || "";
+
+    const fmt = n =>
+      Number(n || 0).toLocaleString("vi-VN") + "đ";
+
+    let BANK = {};
+
+
+    async function get(path) {
+      const response = await fetch(API + path);
+
+      if (!response.ok) {
+        throw 0;
+      }
+
+      return response.json();
+    }
+
+
+    function vietQr(amount, code) {
+
+      const bank =
+        (BANK.name || "MB")
+          .toUpperCase()
+          .includes("MB")
+          ? "MB"
+          : BANK.name;
+
+      return (
+        "https://img.vietqr.io/image/" +
+        encodeURIComponent(bank) +
+        "-" +
+        encodeURIComponent(BANK.account) +
+        "-compact2.png" +
+        "?amount=" +
+        encodeURIComponent(amount) +
+        "&addInfo=" +
+        encodeURIComponent(code) +
+        "&accountName=" +
+        encodeURIComponent(BANK.owner || "")
+      );
+    }
+
+
+    async function init() {
+
+      const [plansData, configData] =
+        await Promise.all([
+          get("/api/public/plans"),
+          get("/api/public/config")
+        ]);
+
+      BANK = configData.bank || {};
+
+
+      document.getElementById("plan").innerHTML =
+        (plansData.plans || [])
+          .map(plan => `
+            <option value="${plan.code}">
+              ${plan.name} · ${fmt(plan.amount)}
+            </option>
+          `)
+          .join("");
+
+
+      document.getElementById("refInfo").textContent =
+        ref
+          ? "Đơn này có mã giới thiệu: " + ref
+          : "Đơn trực tiếp";
+
+
+      document.getElementById("bankName").textContent =
+        BANK.name || "";
+
+      document.getElementById("bankAccount").textContent =
+        BANK.account || "";
+
+      document.getElementById("bankOwner").textContent =
+        BANK.owner || "";
+    }
+
+
+    async function createOrder() {
+
+      const body = {
+        plan_code:
+          document.getElementById("plan").value,
+
+        customer_name:
+          document.getElementById("name").value,
+
+        customer_contact:
+          document.getElementById("contact").value,
+
+        ref
+      };
+
+
+      const response =
+        await fetch(API + "/api/orders", {
+          method: "POST",
+
+          headers: {
+            "content-type": "application/json"
+          },
+
+          body: JSON.stringify(body)
+        });
+
+
+      const data = await response.json();
+
+
+      if (!response.ok) {
+
+        document.getElementById("msg").textContent =
+          "Lỗi: " +
+          (data.error || "không tạo được đơn");
+
+        return;
+      }
+
+
+      document.getElementById("amount").textContent =
+        fmt(data.amount);
+
+
+      document.getElementById("paymentCode").textContent =
+        data.payment_code;
+
+
+      document.getElementById("qr").src =
+        vietQr(
+          data.amount,
+          data.payment_code
+        );
+
+
+      document
+        .getElementById("pay")
+        .classList
+        .remove("hide");
+
+
+      document.getElementById("msg").textContent =
+        "Mã đơn: " +
+        data.order_code +
+        (
+          data.referral_applied
+            ? " · Đã ghi nhận CTV"
+            : ""
+        );
+
+
+      document
+        .getElementById("pay")
+        .scrollIntoView({
+          behavior: "smooth"
+        });
+    }
+
+
+    async function copyCode() {
+
+      const code =
+        document
+          .getElementById("paymentCode")
+          .textContent;
+
+      await navigator.clipboard.writeText(code);
+    }
+
+
+    init();
+  </script>
+
+</body>
+</html>
