@@ -1,0 +1,133 @@
+<!doctype html>
+<html lang="vi">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Admin CTV · Hữu Phát VPS</title>
+<style>
+:root{--bg:#f5f8ff;--card:#fff;--border:#dbe5f3;--text:#0f172a;--muted:#64748b;--primary:#2563eb;--primary-hover:#1d4ed8;--primary-soft:#eff6ff;--secondary:#e8eef8;--secondary-text:#1e3a8a;--danger:#dc2626;--danger-hover:#b91c1c;--success:#15803d;--warning:#d97706;--shadow:0 8px 24px rgba(15,23,42,.06)}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--text);font:14px system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}.w{max-width:1320px;margin:auto;padding:22px}h1{margin:6px 0 18px;font-size:30px;letter-spacing:-.5px}h2{margin-top:0}.card{background:var(--card);border:1px solid var(--border);border-radius:16px;padding:16px;margin:12px 0;box-shadow:var(--shadow)}.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:10px}.grid .card{margin:0;min-height:105px;display:flex;flex-direction:column;justify-content:center}.k{margin-top:5px;color:var(--primary);font-size:24px;font-weight:800}.m{color:var(--muted)}.small{font-size:12px}input,select,button{padding:10px;border-radius:10px;font:inherit}input,select{background:#fff;color:var(--text);border:1px solid #cbd5e1;outline:none}input:focus,select:focus{border-color:var(--primary);box-shadow:0 0 0 3px rgba(37,99,235,.10)}button{background:var(--primary);color:#fff;border:0;cursor:pointer;font-weight:700;transition:.15s}button:hover{background:var(--primary-hover)}.sec{background:var(--secondary);color:var(--secondary-text)}.sec:hover{background:#dce6f5}.danger{background:var(--danger);color:#fff}.danger:hover{background:var(--danger-hover)}.ghost{background:var(--primary-soft);color:#1d4ed8}.ghost:hover{background:#dbeafe}.row{display:flex;gap:8px;flex-wrap:wrap}.row>*{flex:1;min-width:130px}table{width:100%;border-collapse:collapse}th,td{padding:8px;border-bottom:1px solid #e5edf7;text-align:left;vertical-align:middle}th{background:#f8faff;color:#334155;font-weight:700}tbody tr:hover{background:#f8fbff}.keybox{background:#f8faff;border:1px solid #bfdbfe;border-radius:12px;padding:14px;margin-top:12px;color:var(--text)}.hide{display:none}.badge{display:inline-block;padding:4px 8px;border-radius:999px;background:#eef2f7;font-weight:700}.badge.paid{background:#ecfdf5;color:var(--success)}.badge.pending{background:#fff7ed;color:var(--warning)}.badge.cancelled{background:#fef2f2;color:var(--danger)}.paid{color:var(--success)}.pending{color:var(--warning)}.cancelled{color:var(--danger)}details{padding:4px 12px;background:#f8faff;border:1px solid var(--border);border-radius:12px}details summary{cursor:pointer;font-weight:700;padding:8px 0;color:#1e3a8a}.toolbar{display:flex;gap:8px;flex-wrap:wrap;align-items:center}.toolbar input{min-width:220px;flex:1}.toolbar label{display:flex;align-items:center;gap:6px}.toolbar label input[type="checkbox"]{width:auto}@media(max-width:800px){.grid{grid-template-columns:1fr 1fr}}@media(max-width:520px){.grid{grid-template-columns:1fr}.w{padding:12px}h1{font-size:25px}.card{padding:14px;border-radius:14px}}
+</style>
+</head>
+<body><div class="w">
+<h1>Admin CTV V2.2</h1>
+
+<div class="card">
+  <div class="row"><input id="token" type="password" placeholder="ADMIN_TOKEN"><button onclick="saveToken()">Lưu phiên admin</button><button class="sec" onclick="loadAll()">Tải lại</button></div>
+  <p class="m">ADMIN_TOKEN chỉ lưu trong session trình duyệt.</p>
+</div>
+
+<div class="card">
+  <div class="toolbar">
+    <strong>Kỳ thống kê:</strong>
+    <select id="period" onchange="loadAll()"><option value="all">Tất cả</option><option value="today">Hôm nay</option><option value="month" selected>Tháng này</option></select>
+    <span class="m">Đây chỉ đổi cách hiển thị, không xóa lịch sử.</span>
+  </div>
+</div>
+
+<div class="grid">
+  <div class="card"><div class="m">CTV active</div><div class="k" id="sCtv">-</div></div><div class="card"><div class="m">Khách có ID</div><div class="k" id="sCustomers">-</div></div>
+  <div class="card"><div class="m">Doanh thu kỳ</div><div class="k" id="sRevenue">-</div></div>
+  <div class="card"><div class="m">Đơn paid kỳ</div><div class="k" id="sPaid">-</div></div>
+  <div class="card"><div class="m">Rút tiền đang chờ</div><div class="k" id="sWd">-</div></div>
+</div>
+
+<div class="card">
+<h2>Quản lý gói VPS</h2><p class="m">Đổi giá/hoa hồng ngay tại đây. Không cần sửa code.</p>
+<div class="row"><input id="pCode" placeholder="Mã: P1"><input id="pName" placeholder="Tên: 1CPU - 1RAM"><input id="pAmount" type="number" placeholder="Giá"><input id="pComm" type="number" placeholder="Hoa hồng khách mới"><button onclick="createPlan()">Thêm gói</button></div>
+<div style="overflow:auto"><table><thead><tr><th>Mã</th><th>Tên</th><th>Giá</th><th>HH mới</th><th>Bật</th><th></th></tr></thead><tbody id="plans"></tbody></table></div>
+</div>
+
+<div class="card">
+<h2>Tạo CTV</h2>
+<div class="row"><input id="name" placeholder="Tên CTV"><input id="phone" placeholder="Zalo/SĐT"><input id="ref" placeholder="Mã giới thiệu (trống = tự tạo)"><button onclick="createCTV()">Tạo CTV</button></div>
+<div id="createdBox" class="keybox hide">
+  <b>CTV vừa tạo — lưu key ngay</b>
+  <div id="createdText" style="margin:8px 0"></div>
+  <div class="row"><button onclick="copyCreatedKey()">Copy key đăng nhập</button><button class="sec" onclick="copyCTVPage()">Copy trang đăng nhập CTV</button></div>
+  <div class="m small">Server chỉ lưu hash. Nếu quên key, dùng nút “Reset key” ở bảng CTV.</div>
+</div>
+</div>
+
+<div class="card">
+<h2>Đơn hàng</h2>
+<div class="toolbar"><input id="orderSearch" placeholder="Tìm mã đơn / mã HP / khách / CTV..." oninput="debouncedOrders()"><button class="sec" onclick="loadOrders()">Tìm</button></div>
+<div style="overflow:auto"><table><thead><tr><th>Mã KH</th><th>Đơn</th><th>Mã CK</th><th>CTV</th><th>Gói</th><th>Khách</th><th>Số tiền</th><th>Trạng thái</th><th>Thời gian</th><th></th></tr></thead><tbody id="orders"></tbody></table></div>
+</div>
+
+
+<div class="card">
+<h2>Khách hàng</h2>
+<p class="m">Mỗi người có một mã KH cố định. Cùng Zalo/SĐT tạo đơn mới sẽ dùng lại mã KH cũ.</p>
+<div class="toolbar"><input id="customerSearch" placeholder="Tìm KH ID / tên / Zalo / CTV..." oninput="debouncedCustomers()"><button class="sec" onclick="loadCustomers()">Tìm</button></div>
+<div style="overflow:auto"><table><thead><tr><th>Mã KH</th><th>Tên</th><th>Zalo/SĐT</th><th>CTV nguồn</th><th>Đơn</th><th>Paid</th><th>Đã chi</th><th>Đơn gần nhất</th><th></th></tr></thead><tbody id="customers"></tbody></table></div>
+</div>
+
+<div class="card">
+<h2>Yêu cầu rút</h2>
+<div style="overflow:auto"><table><thead><tr><th>ID</th><th>CTV</th><th>Số tiền</th><th>Trạng thái</th><th>Mã CK</th><th>Xử lý</th></tr></thead><tbody id="wds"></tbody></table></div>
+</div>
+
+<div class="card">
+<div class="toolbar"><h2 style="margin-right:auto">CTV</h2><input id="ctvSearch" placeholder="Tìm tên / ref / SĐT..." oninput="renderCTV()"><label class="m"><input id="showInactive" type="checkbox" onchange="renderCTV()"> Hiện CTV đã khóa</label></div>
+<div style="overflow:auto"><table><thead><tr><th>ID</th><th>Tên</th><th>Zalo</th><th>Ref</th><th>Khách paid</th><th>Số dư</th><th>Trạng thái</th><th>Thao tác</th></tr></thead><tbody id="ctvs"></tbody></table></div>
+</div>
+
+<div class="card">
+<details>
+<summary>Công cụ nâng cao / đối soát</summary>
+<p class="m">Chỉ dùng khi cần kiểm tra sự cố hoặc backup. Tiền thật vẫn đối chiếu với ngân hàng/SePay.</p>
+<div class="row"><button class="sec" onclick="downloadCsv('customers')">Xuất khách hàng</button><button class="sec" onclick="downloadCsv('orders')">Xuất đơn hàng</button><button class="sec" onclick="downloadCsv('bank')">Xuất giao dịch ngân hàng</button><button class="sec" onclick="downloadCsv('ledger')">Xuất ledger hoa hồng</button><button class="sec" onclick="downloadCsv('withdrawals')">Xuất rút tiền</button></div>
+</details>
+</div>
+</div>
+
+<script src="config.js"></script>
+<script>
+const API=window.PHATVPS_API_BASE||"";let TOKEN=sessionStorage.getItem("hp_admin")||"";let CTV_CACHE=[];let CREATED_KEY="";
+const $=id=>document.getElementById(id),fmt=n=>Number(n||0).toLocaleString("vi-VN")+"đ";
+$("token").value=TOKEN;
+async function req(path,opt={}){opt.headers={...(opt.headers||{}),"content-type":"application/json",authorization:"Bearer "+TOKEN};const r=await fetch(API+path,opt);let j={};try{j=await r.json()}catch{}if(!r.ok)throw new Error(j.error||j.message||("HTTP "+r.status));return j}
+function e(s){return String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]))}
+function saveToken(){TOKEN=$("token").value.trim();sessionStorage.setItem("hp_admin",TOKEN);loadAll()}
+function sinceValue(){const p=$("period").value;if(p==="all")return"";const d=new Date();if(p==="today")d.setHours(0,0,0,0);else{d.setDate(1);d.setHours(0,0,0,0)}return d.toISOString()}
+async function loadAll(){try{const since=sinceValue(),qs=since?"?since="+encodeURIComponent(since):"";const [s,c,w,p]=await Promise.all([req("/api/admin/summary"+qs),req("/api/admin/ctvs"),req("/api/admin/withdrawals"),req("/api/admin/plans")]);$("sCtv").textContent=s.active_ctvs;$("sCustomers").textContent=s.customers_total||0;$("sRevenue").textContent=fmt(s.paid_revenue);$("sPaid").textContent=s.paid_orders;$("sWd").textContent=s.pending_withdrawals+" · "+fmt(s.pending_withdrawal_amount);CTV_CACHE=c.ctvs||[];renderCTV();renderPlans(p.plans||[]);renderWithdrawals(w.withdrawals||[]);await Promise.all([loadOrders(),loadCustomers()])}catch(err){alert("Admin lỗi: "+err.message)}}
+function renderPlans(list){$("plans").innerHTML=list.map(x=>`<tr><td><input id="pc${x.id}" value="${e(x.code)}"></td><td><input id="pn${x.id}" value="${e(x.name)}"></td><td><input id="pa${x.id}" type="number" value="${x.amount}"></td><td><input id="pm${x.id}" type="number" value="${x.new_commission}"></td><td><input id="px${x.id}" type="checkbox" ${x.active?"checked":""}></td><td><button onclick="savePlan(${x.id})">Lưu</button></td></tr>`).join("")}
+async function createPlan(){try{await req("/api/admin/plans",{method:"POST",body:JSON.stringify({code:$("pCode").value,name:$("pName").value,amount:+$("pAmount").value,new_commission:+$("pComm").value,renewal_percent:0,active:true})});["pCode","pName","pAmount","pComm"].forEach(x=>$(x).value="");loadAll()}catch(err){alert("Tạo gói lỗi: "+err.message)}}
+async function savePlan(id){try{await req(`/api/admin/plans/${id}`,{method:"POST",body:JSON.stringify({code:$("pc"+id).value,name:$("pn"+id).value,amount:+$("pa"+id).value,new_commission:+$("pm"+id).value,renewal_percent:0,active:$("px"+id).checked})});loadAll()}catch(err){alert("Lưu gói lỗi: "+err.message)}}
+async function createCTV(){try{const j=await req("/api/admin/ctvs",{method:"POST",body:JSON.stringify({name:$("name").value,phone:$("phone").value,referral_code:$("ref").value})});CREATED_KEY=j.access_code;$("createdText").innerHTML=`Tên: <b>${e(j.name)}</b> · REF: <b>${e(j.referral_code)}</b><br>KEY ĐĂNG NHẬP: <b>${e(j.access_code)}</b>`;$("createdBox").classList.remove("hide");["name","phone","ref"].forEach(x=>$(x).value="");loadAll()}catch(err){alert("Tạo CTV lỗi: "+err.message)}}
+async function copyCreatedKey(){if(!CREATED_KEY)return;await navigator.clipboard.writeText(CREATED_KEY)}
+async function copyCTVPage(){const u=new URL("ctv.html",location.href);if(location.hostname==="localhost"||location.hostname==="127.0.0.1")u.pathname="/ctv";await navigator.clipboard.writeText(u.toString())}
+function renderCTV(){const q=$("ctvSearch").value.trim().toLowerCase(),show=$("showInactive").checked;const rows=CTV_CACHE.filter(x=>(show||x.status==="active")&&(!q||[x.name,x.phone,x.referral_code].some(v=>String(v||"").toLowerCase().includes(q))));$("ctvs").innerHTML=rows.map(x=>`<tr><td>${x.id}</td><td>${e(x.name)}</td><td>${e(x.phone||"-")}</td><td>${e(x.referral_code)}</td><td>${x.paid_customers}</td><td>${fmt(x.balance)}</td><td><select onchange="setStatus(${x.id},this.value)"><option ${x.status==="active"?"selected":""}>active</option><option ${x.status==="inactive"?"selected":""}>inactive</option><option ${x.status==="banned"?"selected":""}>banned</option></select></td><td><button class="sec" onclick="resetKey(${x.id},'${e(x.name).replaceAll("'","&#39;")}')">Reset key</button> <button class="danger" onclick="deleteCTV(${x.id})">Xóa</button></td></tr>`).join("")||'<tr><td colspan="8" class="m">Không có CTV phù hợp.</td></tr>'}
+async function setStatus(id,status){try{await req(`/api/admin/ctvs/${id}/status`,{method:"POST",body:JSON.stringify({status})});loadAll()}catch(err){alert(err.message)}}
+async function resetKey(id,name){if(!confirm(`Reset key đăng nhập của ${name}? Key cũ sẽ mất hiệu lực ngay.`))return;try{const j=await req(`/api/admin/ctvs/${id}/reset-key`,{method:"POST",body:"{}"});CREATED_KEY=j.access_code;$("createdText").innerHTML=`Đã reset key cho <b>${e(j.name)}</b> · REF: <b>${e(j.referral_code)}</b><br>KEY MỚI: <b>${e(j.access_code)}</b>`;$("createdBox").classList.remove("hide");scrollTo({top:0,behavior:"smooth"})}catch(err){alert("Reset key lỗi: "+err.message)}}
+async function deleteCTV(id){if(!confirm("Xóa CTV này? Chỉ xóa được CTV chưa có đơn/hoa hồng/rút tiền. CTV có lịch sử nên chuyển sang inactive để giữ đối soát."))return;try{await req(`/api/admin/ctvs/${id}/delete`,{method:"POST",body:"{}"});loadAll()}catch(err){if(err.message==="ctv_has_history_use_inactive")alert("CTV này đã có lịch sử giao dịch nên không được xóa. Hãy chuyển trạng thái sang inactive/banned để giữ lịch sử.");else alert("Xóa lỗi: "+err.message)}}
+let orderTimer;function debouncedOrders(){clearTimeout(orderTimer);orderTimer=setTimeout(loadOrders,300)}
+async function loadOrders(){try{
+  const p=new URLSearchParams(),q=$("orderSearch").value.trim(),since=sinceValue();
+  if(q)p.set("q",q);if(since)p.set("since",since);
+  const j=await req("/api/admin/orders"+(p.toString()?"?"+p:""));
+  $("orders").innerHTML=(j.orders||[]).map(o=>{
+    const timeline=[
+      `① Tạo đơn: ${o.created_at||"-"}`,
+      `② Khách: ${o.customer_code||"-"} · ${o.customer_master_name||o.customer_name||"-"}`,
+      `③ CTV: ${o.ctv_id?(o.ctv_name+" · "+o.referral_code):"Khách trực tiếp"}`,
+      `④ SePay match: ${o.bank_transaction_id?(o.bank_received_at||"Đã ghép giao dịch"):"Chưa match"}`,
+      `⑤ Thanh toán: ${o.paid_at||"Chưa thanh toán"}`,
+      `⑥ Hoa hồng: ${o.commission_amount?fmt(o.commission_amount):"0đ"}`
+    ].join("<br>");
+    return `<tr><td><b>${e(o.customer_code||"-")}</b></td><td>${e(o.order_code)}</td><td>${e(o.payment_code)}</td><td>${o.ctv_id?`${e(o.ctv_name)}<div class="m small">${e(o.referral_code)}</div>`:'<span class="m">Trực tiếp</span>'}</td><td>${e(o.plan_name)}</td><td>${e(o.customer_name||"-")}<div class="m small">${e(o.customer_contact||"")}</div></td><td>${fmt(o.amount)}</td><td><span class="badge ${e(o.status)}">${e(o.status)}</span></td><td>${e(o.paid_at||o.created_at||"-")}</td><td><button class="ghost" onclick="toggleTimeline(${o.id})">Timeline</button></td></tr>
+    <tr id="tl${o.id}" class="hide"><td colspan="10"><div class="keybox">${timeline}</div></td></tr>`;
+  }).join("")||'<tr><td colspan="10" class="m">Chưa có đơn.</td></tr>'
+}catch(err){console.error(err)}}
+function toggleTimeline(id){$("tl"+id)?.classList.toggle("hide")}
+
+let customerTimer;function debouncedCustomers(){clearTimeout(customerTimer);customerTimer=setTimeout(loadCustomers,300)}
+async function loadCustomers(){try{const p=new URLSearchParams(),q=$("customerSearch").value.trim();if(q)p.set("q",q);const j=await req("/api/admin/customers"+(p.toString()?"?"+p:""));$("customers").innerHTML=(j.customers||[]).map(c=>`<tr><td><b>${e(c.customer_code)}</b></td><td>${e(c.name||"-")}</td><td>${e(c.contact||"-")}</td><td>${c.source_ctv_name?`${e(c.source_ctv_name)}<div class="m small">${e(c.source_ref||"")}</div>`:'<span class="m">Direct/Chưa gắn</span>'}</td><td>${c.total_orders||0}</td><td>${c.paid_orders||0}</td><td>${fmt(c.total_spent||0)}</td><td>${e(c.last_order_at||"-")}</td><td><button class="ghost" onclick="editCustomer(${c.id},'${e(c.name||"").replaceAll("'","&#39;")}','${e(c.contact||"").replaceAll("'","&#39;")}')">Sửa</button></td></tr>`).join("")||'<tr><td colspan="9" class="m">Chưa có khách.</td></tr>'}catch(err){console.error(err)}}
+async function editCustomer(id,name,contact){const newName=prompt("Tên khách:",name);if(newName===null)return;const newContact=prompt("Zalo/SĐT:",contact);if(newContact===null)return;try{await req(`/api/admin/customers/${id}`,{method:"POST",body:JSON.stringify({name:newName,contact:newContact})});await Promise.all([loadCustomers(),loadOrders()])}catch(err){alert("Sửa khách lỗi: "+err.message)}}
+
+function renderWithdrawals(list){$("wds").innerHTML=list.map(x=>`<tr><td>${e(x.withdrawal_code)}</td><td>${e(x.ctv_name)} (${e(x.referral_code)})</td><td>${fmt(x.amount)}</td><td>${e(x.status)}</td><td>${e(x.bank_reference||"-")}</td><td>${x.status==="pending"?`<button onclick="pay(${x.id})">Đã chuyển</button> <button class="danger" onclick="rejectWd(${x.id})">Từ chối</button>`:""}</td></tr>`).join("")||'<tr><td colspan="6" class="m">Không có yêu cầu rút.</td></tr>'}
+async function pay(id){const bank_reference=prompt("Nhập mã giao dịch chuyển khoản bạn vừa thực hiện:");if(!bank_reference)return;try{await req(`/api/admin/withdrawals/${id}/pay`,{method:"POST",body:JSON.stringify({bank_reference})});loadAll()}catch(err){alert(err.message)}}
+async function rejectWd(id){const note=prompt("Lý do từ chối:")||"";try{await req(`/api/admin/withdrawals/${id}/reject`,{method:"POST",body:JSON.stringify({note})});loadAll()}catch(err){alert(err.message)}}
+async function downloadCsv(type){const r=await fetch(API+`/api/admin/export.csv?type=${type}`,{headers:{authorization:"Bearer "+TOKEN}});if(!r.ok){alert("Không xuất được");return}const b=await r.blob(),a=document.createElement("a");a.href=URL.createObjectURL(b);a.download=`${type}-${new Date().toISOString().slice(0,10)}.csv`;a.click();URL.revokeObjectURL(a.href)}
+if(TOKEN)loadAll();
+</script></body></html>
